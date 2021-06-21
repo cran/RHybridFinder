@@ -1,0 +1,344 @@
+---
+title: "RHybridFinder"
+author: "Frederic Saab, Peter Kubiniok"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{RHybridFinder}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+RHybridFinder is a package for the analysis of Mass spectrometry (MS) for the 
+discovery of putative hybrid peptides. For the analysis of your sample, please 
+note that the proposed workflow in the context of this package consists of two 
+major steps:
+
+* step 1: HybridFinder
+* Interim: second database search using the merged proteome.
+* step 2: Either checknetMHCpan or step2_wo_netMHCpan
+
+## Loading the package
+
+After installing the package and in order to be able to use the package, it has
+to be loaded
+
+```{r load package, eval=FALSE, echo=TRUE}
+library(RHybridFinder)
+```
+
+## Example data
+
+For demonstration purposes, the data showcased in this vignette, which is also
+available in the package (denovo sequencing and database search results, in .csv 
+format) is from HLA Ligand Atlas (Human liver, Autonomous Donor 17) (Marcu et al., 2020).
+In order to download the human proteome database .fasta file, please visit the
+[uniProt website](https://www.uniprot.org/uniprot/?query=proteome:UP000005640%20reviewed:yes). 
+
+In order to access the example denovo sequencing results and database search results through the package: 
+
+```{r get example data, eval=FALSE, echo=TRUE}
+#retrieve the denovo sequencing results for the example data
+data(package="RHybridFinder", denovo_Human_Liver_AUTD17)
+
+#retrieve the database search results for the example data
+data(package="RHybridFinder", db_Human_Liver_AUTD17)
+```
+The RAW Mass Spectrometry (MS) Files for the dataset are provided by the authors on Proteomics Identifications Database (PRIDE):
+PXD019643
+
+## Step 1
+
+The step 1 consists of running the HybridFinder function.
+
+### HybridFinder
+
+#### Description
+
+The HybridFinder function is based on the workflow proposed by Faridi et al. (2018),
+with some modifications. Whereby, while using denovo sequencing results with database 
+search results and the proteome database, HybridFinder extracts High confidence 
+denovo peptides and then goes through a 3-step search of these into the proteome. 
+If peptide sequences are matched fully within proteins then they are considered 
+as being "Linear" and Linear peptides within a given spectrum are filtered based 
+on the highest ALC (Average Local Confidence: a significance score for the sequence) 
+score. The rest of the spectra go through the second step during which lists of 
+pair fragments from each peptide sequence are created and then searched in the 
+proteome database, if pair fragments are matched within one protein, these are
+considered to be potentially cis-spliced. Then, only the highest ALC peptides from
+each spectrum group are kept. The rest of the spectra goes through the last step, 
+which consists of searching for pair combination matches within two proteins, those 
+that match are considered as being potentially trans-spliced, and only the highest 
+ALC peptides within each spectrum group are kept. 
+Finally, the list of hybrid candidates are concatenated into different 'fake' 
+proteins, with the goal being the creation of a hybrid proteome which would mimic
+the actual proteome. And this hybrid proteome is merged with the reference proteome.
+
+#### Loading data
+
+In order to run HybridFinder, three inputs must be provided to `HybridFinder`
+
+1. all de novo candidates export file - all denovo sequencing candidates, loaded into R as dataframe
+2. DB search psm export file - database search results, loaded into R as dataframe.
+3. folder path to the proteome database used.
+
+
+Please note that it is recommended to have a folder structure that looks as follows, 
+as it helps keep all results organized:
+
+* (parent folder)- Exp 1 (could be any name )
+    * (child folder): first_run
+        * denovo
+        * db
+    * (2nd child folder): second_run
+
+
+```{r load inputs, eval=FALSE, echo=TRUE}
+folder_Human_Liver_AUTD17 <- file.path("./data/Human_Liver_AUTD17")
+denovo_Human_Liver_AUTD17 <- read.csv(file.path(folder_Human_Liver_AUTD17, "first_run","all de novo candidates.csv"), sep=",", head=TRUE,stringsAsFactors = FALSE)
+db_Human_Liver_AUTD17 <- read.csv(file.path(folder_Human_Liver_AUTD17, "first_run","DB search psm.csv"), sep=",", head=TRUE,stringsAsFactors = FALSE)
+proteome_Human_Liver_AUTD17<- file.path(folder_Human_Liver_AUTD17, "uniprot-proteome-human_UP000005640-reviewed_validated.fasta")
+```
+
+
+#### Run HybridFinder
+
+Once the inputs are loaded, running HybridFinder is a piece of cake. Please note
+that the HybridFinder function can use parallel computing in order to obtain results
+fast. It will be good to make sure whether the PC used can support that. 
+
+```{r loading inputs, eval=TRUE, echo=FALSE}
+load("../R/sysdata.rda")
+```
+
+```{r run HybridFinder, eval=FALSE, echo=TRUE}
+
+results_HybridFinder_Human_Liver_AUTD17<- HybridFinder(denovo_candidates =  denovo_Human_Liver_AUTD17, db_search =  db_Human_Liver_AUTD17, proteome_db = proteome_Human_Liver_AUTD17, with_parallel = FALSE, export_files = TRUE, export_dir=folder_Human_Liver_AUTD17)
+```
+
+
+
+
+#### Output
+The function returns a list composed of 3 elements
+
+* a dataframe representing the HybridFinder output, containing the high confidence
+denovo peptides that made it through the different searches (listed above).
+* a vector containing all the hybrid candidate sequences
+* a list consisting of the merged reference+hybrid proteome. 
+
+##### Ouput 1: HybridFinder Step1 output (HF_step1_output)
+
+```{r show first output, eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display HybridFinder(HF) step1 output
+print(head(results_HybridFinder_Human_Liver_AUTD17[[1]]))
+
+```
+
+##### Ouput 2: List of step1 candidate hybrid peptides
+
+```{r show second output, eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display list of candidate hybrid peptides
+print(head(results_HybridFinder_Human_Liver_AUTD17[[2]]))
+```
+##### Ouput 3: merged proteome
+
+```{r show third output, eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display the merged proteome
+print(tail(results_HybridFinder_Human_Liver_AUTD17[[3]]))
+```
+#### Export
+If export is set to `TRUE` and a valid directory is provided in `export_dir`, then 
+the results are exported .csv, .csv and .fasta format, respectively.
+
+Even if the export parameters were not set at the beginning, the results returned
+can always be exported with the `export_HybridFinder_results` function as long as
+as the results obtained from the HybridFinder function are stored which is also 
+indicated in the results_list parameter of the `export_HybridFinder_results` function.
+
+
+## Interim external step: Second database search using the merged proteome
+After finishing this, a second database search has to be done on the raw MS however
+with the merged proteome (.fasta) exported from the HybridFinder function results.
+
+
+## Step2
+
+The second step in RHybridFinder consists of either using `checknetMHCpan` or 
+`step2_wo_netMHCpan`, while using the results from step 1 in order to retrieve
+for the final list of peptides which includes the hybrid candidates, their 
+potential splice types. 
+
+### checknetMHCpan
+
+
+#### Description
+
+the `checknetMHCpan` function represents step 2 of Faridi et al. (2018)'s workflow
+and also features the use of netMHCpan (Jurtz et al., 2017, Reynisson et al., 2020) 
+for obtaining the peptide-MHC-I predicted binding affinities. Please note that netMHCpan needs to be installed in order to be able to run this function. The package also contains a function that runs step2 without netMHCpan (Please refer to the `step2_wo_netMHCpan` 
+part).
+
+#### Loading data
+
+In order to run checknetMHCpan, four inputs must be provided to `checknetMHCpan`
+
+1. netmhcpan_directory: the directory in which netMHCpan is located in (i.e '/usr/bin/' or '/usr/bin/local/')
+2. netmhcpan_alleles: the alleles to be tested again, in a vector format if multiple (i.e alleles<- c('HLA-A*03:01', 'HLA-A*24:02'))
+3. peptide_rerun: the database search results from the 2nd run loaded into R as a dataframe
+4. HF_step1_output: the dataframe of the first element of the `HybridFinder` output.
+
+
+
+```{r loading inputs for checknetMHCpan, eval=FALSE, echo=TRUE}
+netmhcpan_dir<- '/usr/bin/'
+
+alleles_Human_liver_AUTD17<- c("HLA-A*03:01", "HLA-A*24:02", "HLA-B*35:03", "HLA-B*45:01", "HLA-C*04:01", "HLA-C*16:01")
+
+db_rerun_Human_liver_AUTD17 <- read.csv(file.path(folder_Human_Liver_AUTD17, "second_run","DB search psm.csv"), sep=",", head=TRUE,stringsAsFactors = FALSE)
+
+HF_output_Human_liver_AUTD17<- results_HybridFinder_Human_Liver_AUTD17[[1]]
+
+```
+
+
+#### Run checknetMHCpan
+
+Once the inputs are loaded, running checknetMHCpan is easier than ABC. 
+
+```{r run checknetMHCpan, eval=FALSE, echo=TRUE}
+
+results_checknetMHCpan_Human_Liver_AUTD17<- checknetMHCpan(netmhcpan_directory = netmhcpan_dir, netmhcpan_alleles = alleles_Human_liver_AUTD17, peptide_rerun = db_rerun_Human_liver_AUTD17, HF_step1_output = HF_output_Human_liver_AUTD17, export_files = TRUE, export_dir=folder_Human_Liver_AUTD17)
+```
+
+
+#### Output
+The function returns a list composed of 3 elements: 
+- the netMHCpan results in long format, that is the binding affinity results are displayed for each peptide with a given allele from those chosen.
+- the netMHCpan results in wide format, that is the binding affinity levels per peptide summarized for all HLA alleles chosen. 
+- the database results with the respective potential splice types retrieved from step 1
+
+##### Ouput 1: netMHCpan results in long format
+
+```{r show netmhcpan_long_output, eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display netmhcpan output(long version)
+print(head(results_checknetMHCpan_Human_Liver_AUTD17[[1]]))
+
+```
+
+##### Ouput 2: netMHCpan results in wide format
+
+```{r show netmhcpan_wide_output, eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display netmhcpan output tidied version (wide)
+print(head(results_checknetMHCpan_Human_Liver_AUTD17[[2]]))
+
+```
+
+##### Ouput 3: Database search results updated
+
+```{r show database_updated_output, eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display the updated database search results with the categorizations from step1
+print(head(results_checknetMHCpan_Human_Liver_AUTD17[[3]]))
+
+```
+
+#### Export
+If export is set to `TRUE` and a valid directory is provided in `export_dir`, then 
+the results are exported .csv, .tsv (tab-separated) and .csv format, respectively.
+
+Even if the export parameters were not set at the beginning, the results returned
+can always be exported with the `export_checknetMHCpan_results` function as long as
+as the results obtained from the checknetMHCpan function are stored which is also 
+indicated in the results_list parameter of the `export_checknetMHCpan_results` function.
+
+
+### step2_wo_netMHCpan
+
+
+The `step2_wo_netMHCpan`, removes peptide modifications and prepare a peptide (.pep) file for use in webversion of netMHCpan, in case netMHCpan is not installed, OS is windows or the user would like to run in another software. Additionally, the function matches peptide sequences in the database search rerun (the second database search where the merged proteome was used), with the predicted splice type obtained from step 1. 
+
+#### Description
+
+The step2_wo_netMHCpan, removes peptide modifications and runs netMHCpan on peptides
+between 9 and 12-mers. Additionally, the function matches peptide sequences in the 
+database search rerun (the second database search where the merged proteome was used),
+with predicted splice type obtained from step 1. 
+
+#### Loading data
+
+In order to run checknetMHCpan, four inputs must be provided to `checknetMHCpan`
+
+1. peptide_rerun: the database search results from the 2nd run loaded into R as a dataframe
+2. HF_step1_output: the dataframe of the first element of the `HybridFinder` output.
+
+
+```{r loading inputs for step2_wo_netMHCpan, eval=FALSE, echo=TRUE}
+db_rerun_Human_liver_AUTD17 <- read.csv(file.path(folder_Human_Liver_AUTD17, "second_run","DB search psm.csv"), sep=",", head=TRUE,stringsAsFactors = FALSE)
+
+HF_output_Human_liver_AUTD17<- results_HybridFinder_Human_Liver_AUTD17[[1]]
+
+```
+
+
+#### Run step2_wo_netMHCpan
+
+Once the inputs are loaded, running step2_wo_netMHCpan is easier than ABC. 
+
+```{r running step2_wo_netMHCpan, eval=FALSE, echo=TRUE}
+
+results_step2_Human_Liver_AUTD17<- step2_wo_netMHCpan(peptide_rerun = db_rerun_Human_liver_AUTD17, HF_step1_output = HF_output_Human_liver_AUTD17, export_files = TRUE, export_dir=folder_Human_Liver_AUTD17)
+```
+
+
+#### Output
+The function returns a list composed of 2 elements: 
+- a character vector containing the list of unique peptides from the database search rerun without modifications and of length 9 to 12 amino acids 
+- the database results with the respective potential splice types retrieved from step 1
+
+##### Ouput 1: netMHCpan-ready input
+```{r show netmhcpan-ready input, eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display the netmhcpan-ready input / list of all peptides 9-12 aa, without 
+#modifications
+print(head(results_step2_Human_Liver_AUTD17[[1]]))
+
+```
+
+##### Ouput 2: Database search results updated
+```{r show database_updated_output(2), eval=TRUE, echo=TRUE, paged.print=TRUE}
+#display the updated database search results table with the categorizations from 
+#step1
+print(head(results_step2_Human_Liver_AUTD17[[2]]))
+
+```
+
+#### Export
+If export is set to `TRUE` and a valid directory is provided in `export_dir`, then 
+the results are exported .csv, .csv and csv format, respectively.
+
+Even if the export parameters were not set at the beginning, the results returned
+can always be exported with the `export_step2_results` function as long as
+as the results obtained from the step2_wo_netMHCpan function are stored which is also 
+indicated in the results_list parameter of the `export_step2_results` function.
+
+
+## References
+
+Faridi, P., Li, C., Ramarathinam, S. H., Vivian, J. P., Illing, P. T., Mifsud, N. A., Ayala, R., Song, J., Gearing, L. J., Hertzog, P. J., Ternette, N., Rossjohn, J., Croft, N. P., & Purcell, A. W. (2018). A subset of HLA-I peptides are not genomically templated: Evidence for cis- and trans-spliced peptide ligands. Science Immunology, 3(28), eaar3947. \doi 10.1126/sciimmunol.aar3947, [Link](https://immunology.sciencemag.org/content/3/28/eaar3947)
+
+Hanada K, Yewdell JW, Yang JC. Immune recognition of a human renal cancer antigen through post-translational protein splicing. Nature. 2004 Jan 15;427(6971):252-6. DOI \doi 10.1038/nature02240, [Link](https://www.nature.com/articles/nature02240)
+
+Marcu A, Bichmann L, Kuchenbecker L, et al HLA Ligand Atlas: a benign reference of HLA-presented peptides to improve T-cell-based cancer immunotherapyJournal for ImmunoTherapy of Cancer 2021;9:e002071. \doi 10.1136/jitc-2020-002071, [Link](https://jitc.bmj.com/content/9/4/e002071)
+
+Birkir Reynisson, Bruno Alvarez, Sinu Paul, Bjoern Peters, Morten Nielsen, NetMHCpan-4.1 and NetMHCIIpan-4.0: improved predictions of MHC antigen presentation by concurrent motif deconvolution and integration of MS MHC eluted ligand data, Nucleic Acids Research, Volume 48, Issue W1, 02 July 2020, Pages W449–W454, \doi 10.1093/nar/gkaa379, [Link](https://academic.oup.com/nar/article/48/W1/W449/5837056)
+
+Jurtz V, Paul S, Andreatta M, Marcatili P, Peters B, Nielsen M. NetMHCpan-4.0: Improved Peptide-MHC Class I Interaction Predictions Integrating Eluted Ligand and Peptide Binding Affinity Data. J Immunol. 2017 Nov 1;199(9):3360-3368. Epub 2017 Oct 4. PMID: 28978689; PMCID: PMC5679736 \doi 10.4049/jimmunol.1700893, [Link](https://academic.oup.com/nar/article/48/W1/W449/5837056)
+
+The UniProt Consortium, UniProt: the universal protein knowledgebase in 2021, Nucleic Acids Research, Volume 49, Issue D1, 8 January 2021, Pages D480–D489, \doi 10.1093/nar/gkaa1100, [Link](https://academic.oup.com/nar/article/49/D1/D480/6006196)
