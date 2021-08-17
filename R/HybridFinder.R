@@ -7,9 +7,14 @@
 #' @param denovo_candidates dataframe containing all denovo candidate peptides
 #' @param db_search dataframe containing the database search peptides
 #' @param proteome_db path to the proteome FASTA file
+#' @param customALCcutoff the default is calculated based on the median ALC of the
+#' assigned spectrum groups (spectrum groups that match in the database search
+#' results and in the denovo sequencing results) where also the peptide sequence
+#' matches, Default: NULL
 #' @param with_parallel for faster results, this function also utilizes
 #' parallel computing (please read more on parallel computing in order
 #' to be sure that your computer does support this), Default: TRUE
+#' @param customCores custom amount of cores strictly higher than 5, Default: 6
 #' @param export_files a boolean parameter for exporting the dataframes into
 #' files in the next parameter for the output directory, Default: FALSE,
 #' Default: FALSE
@@ -17,7 +22,7 @@
 #' export_files=TRUE, Default: NULL, Default: NULL
 #' @return The output is a list of 3 dataframes containing:
 #' \enumerate{
-#'            \item the HybridFinder output (datafra e) - the spectra that made
+#'            \item the HybridFinder output (dataframe) - the spectra that made
 #'            it to the end with their respective columns (ALC, m/z, RT, Fraction,
 #'            Scan) and a categorization column which denotes their potential splice
 #'            type (-cis, -trans) or whether they are linear (the entire sequence
@@ -84,14 +89,16 @@
 #' @export
 #' @importFrom seqinr read.fasta s2c
 
-HybridFinder<- function(denovo_candidates, db_search, proteome_db, with_parallel
-                        = TRUE, export_files = FALSE, export_dir = NULL){
+HybridFinder<- function(denovo_candidates, db_search, proteome_db,
+                        customALCcutoff=NULL, with_parallel= TRUE, customCores=6,
+                        export_files = FALSE, export_dir = NULL){
 
   #use path for concatenating at the end
   proteome_path <- gsub(".*(/)","", proteome_db)
 
 
   #extract high quality and unique denovo peptides
+  input_for_HF <- prepare_input_for_HF(denovo_candidates, db_search, customALCcutoff)
 
   #create an extra id column
   input_for_HF$extraid <- paste0(input_for_HF$denovo_id,"-+xx", input_for_HF$Peptide,
@@ -107,7 +114,7 @@ HybridFinder<- function(denovo_candidates, db_search, proteome_db, with_parallel
   #search for linear peptides
   message('Step01: Search for linear peptides...')
   linear_peptides <- search_for_linear_peptides(input_for_HF, proteome_db,
-                                                with_parallel)
+                                                with_parallel, customCores)
   not_linear_peptides <- linear_peptides[[1]]
   final_df_linear_peptides <- linear_peptides[[2]]
 
@@ -115,7 +122,8 @@ HybridFinder<- function(denovo_candidates, db_search, proteome_db, with_parallel
   message('Step02: Search for cis-spliced peptides...')
   cis_spliced_peptides <- search_for_cis_spliced_peptides(not_linear_peptides ,
                                                           proteome_db,
-                                                          with_parallel)
+                                                          with_parallel,
+                                                          customCores)
   not_cis_peptides <- cis_spliced_peptides[[1]]
   final_df_cis_peptides <- cis_spliced_peptides[[2]]
 
@@ -124,7 +132,8 @@ HybridFinder<- function(denovo_candidates, db_search, proteome_db, with_parallel
   message('Step03: Search for trans-spliced peptides...')
   trans_spliced_peptides <- search_for_trans_spliced_peptides(not_cis_peptides,
                                                               proteome_db,
-                                                              with_parallel)
+                                                              with_parallel,
+                                                              customCores)
   final_df_trans_peptides <- trans_spliced_peptides
 
   #compile all peptides
@@ -148,6 +157,10 @@ HybridFinder<- function(denovo_candidates, db_search, proteome_db, with_parallel
   final_df_all_peptides <- final_df_all_peptides[, -cols_to_delete]
   final_df_all_peptides<- cbind(metadata_denovo, final_df_all_peptides)
 
+  #keep only 9-12 amino acids
+  final_df_all_peptides <- final_df_all_peptides[nchar(final_df_all_peptides$Peptide) > 8,]
+  final_df_all_peptides <- final_df_all_peptides[nchar(final_df_all_peptides$Peptide) < 13,]
+
   # only spliced and filter for 9-12 -mers
   only_spliced <- final_df_all_peptides[final_df_all_peptides$Type!= "Linear",
                                         c(grep("^Peptide$",
@@ -155,12 +168,9 @@ HybridFinder<- function(denovo_candidates, db_search, proteome_db, with_parallel
                                           grep("^Length$",
                                                colnames(final_df_all_peptides)))]
   only_spliced <- only_spliced[!duplicated(only_spliced$Peptide),]
-  only_spliced <- only_spliced[only_spliced$Length > 8,]
-  only_spliced <- only_spliced[only_spliced$Length < 13,]
 
   #make fake proteins
   hybrid_proteome <- make_fake_HF_proteins(only_spliced)
-
 
   #concatenate proteome with hybrid proteins
   hybrid_concat <- list(proteome_db, hybrid_proteome)

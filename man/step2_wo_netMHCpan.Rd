@@ -47,8 +47,9 @@ the database search rerun results with their categorizations (into potentially
 cis and potentially trans) obtained from the first step (HybridFinder).
 }
 \examples{
-\donttest{
-results_checknetmhcpan_Exp1<- step2_wo_netMHCpan(peptide_rerun, Exp1_HF_results[[1]])
-results_checknetmhcpan_Exp1 <- step2_wo_netMHCpan(peptide_rerun, Exp1_HF_results_denovo_w_spliced)
+if (interactive()) {
+data(package="RHybridFinder", "db_rerun_Human_Liver_AUTD17")
+results_checknetmhcpan_Human_Liver_AUTD17<- step2_wo_netMHCpan(db_rerun_Human_Liver_AUTD17,
+    results_HybridFinder_Human_Liver_AUTD17[[1]])
 }
 }

@@ -21,12 +21,14 @@
 
 
 #find linear peptides
-search_for_linear_peptides <- function(input_for_HF, proteome_db, with_parallel){
+search_for_linear_peptides <- function(input_for_HF, proteome_db, with_parallel, customCores){
 
   nbCores<- parallel::detectCores()
 
   if (with_parallel == TRUE & nbCores > 5){
-    message('with parallel computing\n')
+    message('with parallel computing (cores)')
+    nbCores<- customCores
+    message(customCores)
     isLinear_peptides <- linear_parallel(nbCores, input_for_HF, proteome_db)
   } else if (with_parallel == TRUE & nbCores < 5){
     message('without parallel computing\n')

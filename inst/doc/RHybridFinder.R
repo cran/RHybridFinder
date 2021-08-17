@@ -25,7 +25,7 @@ load("../R/sysdata.rda")
 
 ## ----run HybridFinder, eval=FALSE, echo=TRUE----------------------------------
 #  
-#  results_HybridFinder_Human_Liver_AUTD17<- HybridFinder(denovo_candidates =  denovo_Human_Liver_AUTD17, db_search =  db_Human_Liver_AUTD17, proteome_db = proteome_Human_Liver_AUTD17, with_parallel = FALSE, export_files = TRUE, export_dir=folder_Human_Liver_AUTD17)
+#  results_HybridFinder_Human_Liver_AUTD17<- HybridFinder(denovo_candidates =  denovo_Human_Liver_AUTD17, db_search =  db_Human_Liver_AUTD17, proteome_db = proteome_Human_Liver_AUTD17, customALCcutoff = NULL, with_parallel = FALSE, customCores = 8, export_files = TRUE, export_dir=folder_Human_Liver_AUTD17)
 
 ## ----show first output, eval=TRUE, echo=TRUE, paged.print=TRUE----------------
 #display HybridFinder(HF) step1 output

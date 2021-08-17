@@ -15,10 +15,10 @@
 
 netmhcpan_call<- function(hybrid_f, netmhcpan_alleles, path_for_tmp_files){
 
-  utils::write.table(hybrid_f$Peptide, 'peptides.pep', row.names = FALSE,
+  utils::write.table(hybrid_f, 'peptides.pep', row.names = FALSE,
               col.names = FALSE, quote = FALSE)
 
-  cat('running netMHCpan... \n')
+  cat('running netMHCpan')
 
   unique_filename<- paste0(Sys.Date(),"_",deparse(substitute(hybrid_f)),
                            "_cnmhp_netmhcpan_output")

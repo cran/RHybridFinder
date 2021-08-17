@@ -21,7 +21,7 @@
 #' @importFrom stats setNames
 
 
-search_for_cis_spliced_peptides <-  function(not_linear_list, proteome_db, with_parallel){
+search_for_cis_spliced_peptides <-  function(not_linear_list, proteome_db, with_parallel, customCores){
 
   #create all possible fragment combinations
   isnot_Linear <- create_spliced_peptides(not_linear_list)
@@ -37,8 +37,11 @@ search_for_cis_spliced_peptides <-  function(not_linear_list, proteome_db, with_
 
   #look for the peptides in the proteome with or without parallel computing
   if (with_parallel == TRUE & nbCores > 5){
-    message('with parallel computing\n')
+    message('with parallel computing (cores)')
+    nbCores<- customCores
+    message(customCores)
     cis_spliced_peptides <- cis_parallel(nbCores, isnot_Linear, proteome_db)
+
   } else if (with_parallel == TRUE & nbCores < 5){
     message('without parallel computing\n')
     isnot_Linear_list<- stats::setNames(as.list(isnot_Linear$splicePattern), isnot_Linear$id)

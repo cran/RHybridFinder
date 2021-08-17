@@ -23,9 +23,7 @@
 mhc_check<- function(netmhcpan_alleles){
 
   #retrieve netMHCpan list of alleles
-  netmhcpan_listofalleles<- as.data.frame(
-    load_data_for_checking_examples("netmhcpan_list_alleles"), stringsAsFactors = FALSE)
-  netmhcpan_listofalleles<- netmhcpan_listofalleles$V1
+  netmhcpan_listofalleles<- netmhcpan_list_alleles$V1
 
   #re-format the input alleles
   if (length(grep("\\*", netmhcpan_alleles))==0){
@@ -39,6 +37,6 @@ mhc_check<- function(netmhcpan_alleles){
   if (all(x)) {
     #nothing returned if all good.
   }else{
-    stop("Please check the input alleles:", netmhcpan_alleles[x==FALSE])
+    stop(" Please check the input alleles:", netmhcpan_alleles[x==FALSE])
   }
 }

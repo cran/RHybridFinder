@@ -16,7 +16,7 @@
 #' @importFrom stats setNames
 
 
-search_for_trans_spliced_peptides<- function(not_cis_peptides, proteome_db,  with_parallel){
+search_for_trans_spliced_peptides<- function(not_cis_peptides, proteome_db,  with_parallel, customCores){
 
    fragments_not_cis<- create_spliced_non_cis_peptides(not_cis_peptides)
 
@@ -28,7 +28,9 @@ search_for_trans_spliced_peptides<- function(not_cis_peptides, proteome_db,  wit
 
    #look for the peptides in the proteome with or without parallel computing
    if (with_parallel == TRUE & nbCores > 5){
-      message('with parallel computing\n')
+      message('with parallel computing (cores)')
+      nbCores<- customCores
+      message(customCores)
      trans_spliced <- trans_parallel(nbCores, fragments_not_cis_list, proteome_db)
      trans_spliced_fd<- data.frame(Fragment=rep(names(trans_spliced),
                                                 sapply(trans_spliced, length)),

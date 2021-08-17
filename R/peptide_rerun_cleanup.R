@@ -49,6 +49,7 @@ peptide_rerun_cleanup<- function(peptide_rerun, HF_step1_output , peptide_col, l
   peptide_rerun$Potential_spliceType[
     is.na(peptide_rerun$Potential_spliceType)]<- "Linear"
 
+
   #remove peptides that are found only in fake proteins and were not in step1 output
   peptide_rerun$new_acc<- gsub("\\|denovo_HF_fake_protein\\d+||denovo_HF_fake_protein\\d+\\:|\\:|denovo_HF_fake_protein\\d+",
                                "", peptide_rerun$Accession)
@@ -62,8 +63,8 @@ peptide_rerun_cleanup<- function(peptide_rerun, HF_step1_output , peptide_col, l
 
   #select useful info
   hybrid_f<- peptide_rerun$Peptide_no_mods
-  hybrid_f<- hybrid_f[nchar(hybrid_f)>=lower_limit_mer,]
-  hybrid_f<- hybrid_f[nchar(hybrid_f)<=upper_limit_mer,]
+  hybrid_f<- hybrid_f[nchar(hybrid_f)>=lower_limit_mer]
+  hybrid_f<- hybrid_f[nchar(hybrid_f)<=upper_limit_mer]
   hybrid_f<- unique(hybrid_f)
 
   peptide_rerun_cleanup_list <- list(peptide_rerun, hybrid_f)

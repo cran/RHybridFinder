@@ -95,7 +95,6 @@ get_detailed_cis_positions<- function(cis_spliced_fd, proteome_db){
 
   }
 
-
   #get the fragments' length
   new_start_positions$frag1Length <- sapply(new_start_positions$spliced_peptide, function(s) gregexpr("_", s, fixed=TRUE)[[1]]-1)
   new_start_positions$frag2Length  <- nchar(new_start_positions$spliced_peptide)-new_start_positions$frag1Length - 1

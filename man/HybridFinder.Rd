@@ -8,7 +8,9 @@ HybridFinder(
   denovo_candidates,
   db_search,
   proteome_db,
+  customALCcutoff = NULL,
   with_parallel = TRUE,
+  customCores = 6,
   export_files = FALSE,
   export_dir = NULL
 )
@@ -20,9 +22,16 @@ HybridFinder(
 
 \item{proteome_db}{path to the proteome FASTA file}
 
+\item{customALCcutoff}{the default is calculated based on the median ALC of the
+assigned spectrum groups (spectrum groups that match in the database search
+results and in the denovo sequencing results) where also the peptide sequence
+matches, Default: NULL}
+
 \item{with_parallel}{for faster results, this function also utilizes
 parallel computing (please read more on parallel computing in order
 to be sure that your computer does support this), Default: TRUE}
+
+\item{customCores}{custom amount of cores strictly higher than 5, Default: 6}
 
 \item{export_files}{a boolean parameter for exporting the dataframes into
 files in the next parameter for the output directory, Default: FALSE,
@@ -34,7 +43,7 @@ export_files=TRUE, Default: NULL, Default: NULL}
 \value{
 The output is a list of 3 dataframes containing:
 \enumerate{
-           \item the HybridFinder output (datafra e) - the spectra that made
+           \item the HybridFinder output (dataframe) - the spectra that made
            it to the end with their respective columns (ALC, m/z, RT, Fraction,
            Scan) and a categorization column which denotes their potential splice
            type (-cis, -trans) or whether they are linear (the entire sequence

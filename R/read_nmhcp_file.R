@@ -35,12 +35,12 @@ read_nmhcp_file<- function(path_to_nmhcp_output){
   }else{}
   colnames(df_NetMHCpan)<- columnnames
 
-  netMHCpanVersion<- ifelse(any(grep("%Rank_EL|%Rank_BA", colnames(df_NetMHCpan))),4.1, 4.0 )
-  print(paste("you are using netMHCpan version", netMHCpanVersion))
-  if(netMHCpanVersion== 4.1){
+  netMHCpanVersion<- ifelse(any(grep("%Rank_EL|%Rank_BA", colnames(df_NetMHCpan))),"4.1", "4.0" )
+  cat(paste0(" version ", netMHCpanVersion))
+  if(as.numeric(netMHCpanVersion)== 4.1){
     Rank_HLA_EL<- grep("%Rank_EL", colnames(df_NetMHCpan))
     Rank_HLA_BA<- grep("%Rank_BA.", colnames(df_NetMHCpan))
-  } else if(netMHCpanVersion == 4.0) {
+  } else if(as.numeric(netMHCpanVersion) == 4.0) {
     Rank_HLA<- grep("%Rank_|%Rank.|^%Rank$", colnames(df_NetMHCpan))
   }else{
   }
@@ -54,9 +54,9 @@ read_nmhcp_file<- function(path_to_nmhcp_output){
   df_NetMHCpan_o$noneBinder<- ifelse(df_NetMHCpan_o$BindLevel=="Non binder", df_NetMHCpan_o[,mhc_column_index], "")
 
   #create wide format
-  if (netMHCpanVersion == 4.1) {
+  if (as.numeric(netMHCpanVersion) == 4.1) {
     df_NetMHCpan_wide<- data.frame(Peptide=df_NetMHCpan$Peptide, HLA=df_NetMHCpan[,mhc_column_index], Rank_BA=df_NetMHCpan[,Rank_HLA_BA] ,Rank_EL=df_NetMHCpan[,Rank_HLA_EL], BindLevel=df_NetMHCpan$BindLevel)
-  } else if (netMHCpanVersion == 4.0){
+  } else if (as.numeric(netMHCpanVersion) == 4.0){
     df_NetMHCpan_wide<- data.frame(Peptide=df_NetMHCpan$Peptide, HLA=df_NetMHCpan[, mhc_column_index], Rank=df_NetMHCpan[, Rank_HLA], BindLevel=df_NetMHCpan$BindLevel)
   }
   #df_NetMHCpan_wide<- data.frame(Peptide=df_NetMHCpan$Peptide, HLA=mhc_column_index, Rank=df_NetMHCpan$`%Rank`, BindLevel=df_NetMHCpan$BindLevel)
@@ -85,10 +85,10 @@ read_nmhcp_file<- function(path_to_nmhcp_output){
   df_NetMHCpan <-  merge(x=df_NetMHCpan, y=dfm, by.x="Peptide", by.y="Peptide")
   mhc_column_index<- grep("^MHC$|^HLA$", colnames(df_NetMHCpan))
   #reshape to get HLA ranks in columns
-  if (netMHCpanVersion == 4.1){
+  if (as.numeric(netMHCpanVersion) == 4.1){
     pre_df_NetMHCpan_wide<- df_NetMHCpan[,c(1, mhc_column_index, Rank_HLA_EL)]
     df<-stats::reshape(pre_df_NetMHCpan_wide, idvar="Peptide", timevar=grep("^MHC$|^HLA$", colnames(pre_df_NetMHCpan_wide), value=TRUE), direction="wide")
-  }else if (netMHCpanVersion == 4.0){
+  }else if (as.numeric(netMHCpanVersion) == 4.0){
     pre_df_NetMHCpan_wide<- df_NetMHCpan[,c(1, mhc_column_index, Rank_HLA:ncol(df_NetMHCpan))]
     df<-stats::reshape(pre_df_NetMHCpan_wide, idvar="Peptide", timevar=grep("^MHC$|^HLA$", colnames(pre_df_NetMHCpan_wide), value=TRUE), direction="wide")
   }

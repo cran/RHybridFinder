@@ -8,6 +8,10 @@
 #' of the denovo sequencing.
 #' @param db_search the all database search .csv imported file results of the
 #' database search results
+#' @param customALCcutoff the default is calculated based on the median ALC of the
+#' assigned spectrum groups (spectrum groups that match in the database search
+#' results and in the denovo sequencing results) where also the peptide sequence
+#' matches, Default: NULL
 #' @return a list containing
 #' \enumerate{
 #'         \item a dataframe containing all the high quality & unique (which have
@@ -21,7 +25,7 @@
 #' @noRd
 #' @importFrom stats sd median
 
-prepare_input_for_HF <- function(denovo_candidates, db_search){
+prepare_input_for_HF <- function(denovo_candidates, db_search, customALCcutoff){
 
   file_mz_denovoCol<- grep("m[[:punct:]]z",colnames(denovo_candidates))
   file_mz_dbCol <- grep("m[[:punct:]]z",colnames(db_search))
@@ -38,6 +42,7 @@ prepare_input_for_HF <- function(denovo_candidates, db_search){
   denovo_candidates$denovo_id <- paste(denovo_candidates$Fraction, denovo_candidates$Scan, denovo_candidates[,file_mz_denovoCol], denovo_candidates$RT, sep = "-")
   db_search$db_id <- paste(db_search$Fraction, db_search$Scan, db_search[,file_mz_dbCol], db_search$RT, sep = "-")
 
+
   # Replacing all the I to L in the DB_search peptide column and pasting results new column (Peptide_ItoL)
   db_search$Peptide_ItoL <- gsub("I", "L", db_search$Peptide)
 
@@ -52,11 +57,18 @@ prepare_input_for_HF <- function(denovo_candidates, db_search){
 
   # Calculating new ALC [median]
   Positive_ALC_median <- stats::median(denovo_candidates[positive_ALC,file_alc_denovoCol], na.rm = TRUE)
-  #Positive_ALC_sd <- stats::sd(denovo_candidates[positive_ALC,file_alc_denovoCol], na.rm = TRUE)
-  #cutoff_ALC<- Positive_ALC_median - Positive_ALC_sd
   cutoff_ALC <- Positive_ALC_median
-  new_ALC <- ceiling(cutoff_ALC)
 
+  if(!is.null(customALCcutoff)){
+    if(customALCcutoff<85){
+      new_ALC<- 85
+      message('The ALC cutoff was less than 85 but has been set to 85')
+    }else{
+      new_ALC<- ceiling(customALCcutoff)
+    }
+  }else{
+    new_ALC <- ceiling(cutoff_ALC)
+  }
   # sorting out denovo only peptides based on new calculated ALC.
   denovo_only_ALC <- denovo_candidates [((denovo_candidates[,file_alc_denovoCol] >= new_ALC) & is.na(denovo_candidates$Peptide_match_test)), ]
 

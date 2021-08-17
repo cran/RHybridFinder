@@ -1,7 +1,7 @@
 Package: RHybridFinder
 Type: Package
 Title: Identification of Hybrid Peptides in Immunopeptidomic Analyses
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(person("Frederic", "Saab", role = c("aut", "cre"),
                       email = "frederic.saab@umontreal.ca"),
                person("Peter", "Kubiniok", role = "aut") )
@@ -25,8 +25,8 @@ RoxygenNote: 7.1.1
 NeedsCompilation: no
 LazyData: True
 LazyDataCompression: bzip2
-Packaged: 2021-06-18 06:10:11 UTC; caron-fs
+Packaged: 2021-08-17 01:48:50 UTC; caron-fs
 Author: Frederic Saab [aut, cre],
   Peter Kubiniok [aut]
 Repository: CRAN
-Date/Publication: 2021-06-21 06:10:07 UTC
+Date/Publication: 2021-08-17 16:30:24 UTC

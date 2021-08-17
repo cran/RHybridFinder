@@ -1,7 +1,7 @@
-#' @title db_rerun_Human_liver_AUTD17
+#' @title db_rerun_Human_Liver_AUTD17
 #' @description database search results from the second run using PEAKS software,
 #' using the raw file from HLA ligand ATLAS, Human Liver AutDonor 17
-#' @format A data frame with 8080 rows and 18 variables:
+#' @format A data frame with 6315 rows and 18 variables:
 #' \describe{
 #'   \item{\code{Peptide}}{character Peptide}
 #'   \item{\code{X.10lgP}}{double X.10lgP}
@@ -24,4 +24,4 @@
 #'}
 #' @details database search results from the second run using PEAKS software,
 #' using the raw file from HLA ligand ATLAS, Human Liver AutDonor 17
-"db_rerun_Human_liver_AUTD17"
+"db_rerun_Human_Liver_AUTD17"

@@ -119,12 +119,12 @@ fast. It will be good to make sure whether the PC used can support that.
 load("../R/sysdata.rda")
 ```
 
+It is possible to set the amount of cores (customCores) for the HybridFinder function to run (given that these are >5). Additionally, it is possible to set a custom ALC cutoff (through the customALCcutoff parameter), setting this allows to filter unassigned spectra based on the newly set custom ALC cutoff (instead of it being calculated). The minimum customALCcutoff score that can be set is 85. Anything set lower than 85 will be set at 85.
+
 ```{r run HybridFinder, eval=FALSE, echo=TRUE}
 
-results_HybridFinder_Human_Liver_AUTD17<- HybridFinder(denovo_candidates =  denovo_Human_Liver_AUTD17, db_search =  db_Human_Liver_AUTD17, proteome_db = proteome_Human_Liver_AUTD17, with_parallel = FALSE, export_files = TRUE, export_dir=folder_Human_Liver_AUTD17)
+results_HybridFinder_Human_Liver_AUTD17<- HybridFinder(denovo_candidates =  denovo_Human_Liver_AUTD17, db_search =  db_Human_Liver_AUTD17, proteome_db = proteome_Human_Liver_AUTD17, customALCcutoff = NULL, with_parallel = FALSE, customCores = 8, export_files = TRUE, export_dir=folder_Human_Liver_AUTD17)
 ```
-
-
 
 
 #### Output
